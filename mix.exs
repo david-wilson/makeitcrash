@@ -16,7 +16,7 @@ defmodule Makeitcrash.Mixfile do
   # Type `mix help compile.app` for more information.
   def application do
     [mod: {Makeitcrash.Application, []},
-     extra_applications: [:logger, :runtime_tools]]
+     extra_applications: [:logger, :runtime_tools, :ex_twilio]]
   end
 
   # Specifies which paths to compile per environment.
@@ -30,6 +30,7 @@ defmodule Makeitcrash.Mixfile do
     [{:phoenix, "~> 1.3.0-rc"},
      {:phoenix_pubsub, "~> 1.0"},
      {:gettext, "~> 0.11"},
+     {:ex_twilio, "~> 0.3.0"},
      {:cowboy, "~> 1.0"}]
   end
 end
