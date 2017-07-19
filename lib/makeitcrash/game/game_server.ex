@@ -13,7 +13,7 @@ defmodule GameServer do
     end
 
     def guess_letter(pid, guess) do
-        GenServer.call(pid, {:guess, guess})
+        GenServer.call(pid, {:guess, String.downcase(guess)})
     end
 
     # Server

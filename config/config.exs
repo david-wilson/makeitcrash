@@ -20,7 +20,8 @@ config :logger, :console,
 
 #Twilio
 config :ex_twilio, account_sid:   {:system, "TWILIO_ACCOUNT_SID"},
-                   auth_token:    {:system, "TWILIO_AUTH_TOKEN"}
+                   auth_token:    {:system, "TWILIO_AUTH_TOKEN"},
+                   from_number:   System.get_env("TWILIO_FROM_NUMBER")
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.

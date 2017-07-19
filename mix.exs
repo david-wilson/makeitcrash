@@ -31,6 +31,7 @@ defmodule Makeitcrash.Mixfile do
      {:phoenix_pubsub, "~> 1.0"},
      {:gettext, "~> 0.11"},
      {:ex_twilio, "~> 0.3.0"},
+     {:hackney, "== 1.8.0", override: true},
      {:cowboy, "~> 1.0"}]
   end
 end
