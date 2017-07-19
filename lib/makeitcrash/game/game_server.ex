@@ -8,12 +8,12 @@ defmodule GameServer do
         GenServer.start_link(__MODULE__, %{word: word, guessed: []})
     end
 
-    def get_game_state(pid) do 
-        GenServer.call(pid, :get_state)
+    def get_game_state(pid, from) do 
+        GenServer.call(pid, {:get_state, from})
     end
 
-    def guess_letter(pid, guess) do
-        GenServer.call(pid, {:guess, String.downcase(guess)})
+    def guess_letter(pid, guess, from) do
+        GenServer.cast(pid, {:guess, String.downcase(guess), from})
     end
 
     # Server
@@ -22,26 +22,50 @@ defmodule GameServer do
         {:ok, game_state_from_core(core_state)}
     end
 
-    def handle_call(:get_state, _from, state) do
+    def handle_call({:get_state, from}, _from, state) do
         {:reply, user_state(state, compute_winning_state(state)), state}
     end
 
-    def handle_call({:guess, guess}, _from, state) do
+    def handle_cast({:guess, guess, from}, state) do
+        IO.inspect guess
+        IO.inspect from
+        {user_state, state} = get_reply(state, guess)
+        Makeitcrash.StateServer.update_state(from, user_state)
+        user_state
+        |> render_game
+        |> send_message(from)
+        {:noreply, state}
+    end  
+
+    defp get_reply(state, guess) do
         status = compute_winning_state(state) 
         new_state = update_state(state, guess)
+
         case {status, compute_winning_state(new_state)} do
             {:win,_} ->
-                {:reply, user_state(state, :win), state}
+                {user_state(state, :win), state}
             {:lose,_} ->
-                {:reply, user_state(state, :lose), state}
+                {user_state(state, :lose), state}
             {_, :win} ->
-                {:reply, user_state(new_state, :win), new_state}
+                {user_state(new_state, :win), new_state}
             {_, :lose} -> 
-                {:reply, user_state(new_state, :lose), new_state}
+                {user_state(new_state, :lose), new_state}
             _ ->
-                {:reply, user_state(new_state, :playing), new_state}
+                {user_state(new_state, :playing), new_state}
         end
-    end  
+    end
+
+    defp render_game({progress, guessed_list, guessed, total, state} = game_tuple) do
+        rendered_list = inspect(guessed_list)
+        "#{progress}, #{guessed}/#{total} guesses, #{rendered_list}"
+    end
+
+    defp send_message(body, number) do
+        message = %ExTwilio.Message{from: Application.get_env(:ex_twilio, :from_number),
+                                    to: number,
+                                    body: body}
+        {:ok, message_resource} = ExTwilio.Message.create(message)
+    end
 
     defp update_state(state, guess) do
         single_char_guess = String.length(guess) == 1
