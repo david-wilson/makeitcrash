@@ -11,6 +11,7 @@ defmodule Makeitcrash.Application do
       # Start the endpoint when the application starts
       supervisor(Makeitcrash.Web.Endpoint, []),
       supervisor(Registry, [:unique, :game_process_registry]),
+      supervisor(Makeitcrash.GameSupervisor, []),
       # Start your own worker by calling: Makeitcrash.Worker.start_link(arg1, arg2, arg3)
       # worker(Makeitcrash.Worker, [arg1, arg2, arg3]),
       worker(Makeitcrash.SmsServer, [])

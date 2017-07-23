@@ -45,7 +45,7 @@ defmodule GameServer do
 
     def handle_cast({:guess, guess}, state) do
         {user_state, state} = get_reply(state, guess)
-        Makeitcrash.StateServer.update_state(state.number, user_state)
+        Makeitcrash.StateServer.update_state(state.number, {state.word, state.guessed})
         user_state
         |> render_game
         |> state.message_client.send_message(state.number)

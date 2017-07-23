@@ -3,7 +3,7 @@ defmodule Makeitcrash.SmsServer do
 
     #Client API
     def start_link do
-        GenServer.start_link(__MODULE__, %{players: MapSet.new}, name: MessageServer)
+        GenServer.start_link(__MODULE__, MapSet.new, name: MessageServer)
     end
 
     def handle_message( number, body) do
@@ -20,16 +20,15 @@ defmodule Makeitcrash.SmsServer do
     end
 
     def handle_cast({:message, from, body}, state) do
-        case MapSet.member?(state.players, from) do
+        case MapSet.member?(state, from) do
             true ->
                 GameServer.guess_letter(from, body)
                 {:noreply, state}
             false ->
                 IO.puts "New game!"
-                {:ok, _} = GameServer.start_link("union",
-                    Makeitcrash.MessageClient.Twilio, from)
+                Makeitcrash.GameSupervisor.start_game(from, "union")
                 GameServer.guess_letter(from, body)
-                {:noreply, MapSet.put(state.players, from)}
+                {:noreply, MapSet.put(state, from)}
         end
     end
 end
