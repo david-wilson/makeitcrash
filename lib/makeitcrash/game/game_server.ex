@@ -4,8 +4,8 @@ defmodule GameServer do
     @num_guesses 5
 
     # Client API
-    def start_link(word) do
-        GenServer.start_link(__MODULE__, %{word: word, guessed: []})
+    def start_link(word, client) do
+        GenServer.start_link(__MODULE__, %{word: word, guessed: [], message_client: client})
     end
 
     def get_game_state(pid, from) do 
@@ -18,7 +18,6 @@ defmodule GameServer do
 
     # Server
     def init(core_state) do
-        #TODO: build server state from "core" state: word, letters guessed, player ID
         {:ok, game_state_from_core(core_state)}
     end
 
@@ -33,7 +32,7 @@ defmodule GameServer do
         Makeitcrash.StateServer.update_state(from, user_state)
         user_state
         |> render_game
-        |> send_message(from)
+        |> state.message_client.send_message(from)
         {:noreply, state}
     end  
 
@@ -58,13 +57,6 @@ defmodule GameServer do
     defp render_game({progress, guessed_list, guessed, total, state} = game_tuple) do
         rendered_list = inspect(guessed_list)
         "#{progress}, #{guessed}/#{total} guesses, #{rendered_list}"
-    end
-
-    defp send_message(body, number) do
-        message = %ExTwilio.Message{from: Application.get_env(:ex_twilio, :from_number),
-                                    to: number,
-                                    body: body}
-        {:ok, message_resource} = ExTwilio.Message.create(message)
     end
 
     defp update_state(state, guess) do

@@ -14,9 +14,17 @@ defmodule Makeitcrash.SmsServer do
         GenServer.cast(MessageServer, {:message, number, body})
     end
 
+    defp update_game(number, game_state) do
+        GenServer.cast(MessageServer, {:update, number, game_state})
+    end
+
     # Server callbacks
     def init(core_state) do
         {:ok, core_state}
+    end
+
+    def handle_cast({:update, number, game_state}, state) do
+       #TODO: update state store 
     end
 
     def handle_cast({:message, from, body}, state) do
@@ -26,7 +34,8 @@ defmodule Makeitcrash.SmsServer do
                 {:noreply, state}
             :error -> 
                 IO.puts "New game!"
-                {:ok, player_pid} = GameServer.start_link("union")
+                {:ok, player_pid} = GameServer.start_link("union", 
+                    Makeitcrash.MessageClient.Twilio)
                 GameServer.guess_letter(player_pid, body, from)
                 {:noreply, Map.merge(state, %{from => player_pid})}
         end
