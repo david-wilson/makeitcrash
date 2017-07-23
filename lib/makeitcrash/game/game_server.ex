@@ -4,16 +4,19 @@ defmodule GameServer do
     @num_guesses 5
 
     # Client API
-    def start_link(word, client) do
-        GenServer.start_link(__MODULE__, %{word: word, guessed: [], message_client: client})
+    def start_link(word, client, number) do
+        GenServer.start_link(__MODULE__, %{ word: word, 
+                                            guessed: [], 
+                                            message_client: client, 
+                                            number: number})
     end
 
-    def get_game_state(pid, from) do 
-        GenServer.call(pid, {:get_state, from})
+    def get_game_state(pid) do 
+        GenServer.call(pid, :get_state)
     end
 
-    def guess_letter(pid, guess, from) do
-        GenServer.cast(pid, {:guess, String.downcase(guess), from})
+    def guess_letter(pid, guess) do
+        GenServer.cast(pid, {:guess, String.downcase(guess)})
     end
 
     # Server
@@ -21,18 +24,16 @@ defmodule GameServer do
         {:ok, game_state_from_core(core_state)}
     end
 
-    def handle_call({:get_state, from}, _from, state) do
+    def handle_call(:get_state, _from, state) do
         {:reply, user_state(state, compute_winning_state(state)), state}
     end
 
-    def handle_cast({:guess, guess, from}, state) do
-        IO.inspect guess
-        IO.inspect from
+    def handle_cast({:guess, guess}, state) do
         {user_state, state} = get_reply(state, guess)
-        Makeitcrash.StateServer.update_state(from, user_state)
+        Makeitcrash.StateServer.update_state(state.number, user_state)
         user_state
         |> render_game
-        |> state.message_client.send_message(from)
+        |> state.message_client.send_message(state.number)
         {:noreply, state}
     end  
 
@@ -117,5 +118,4 @@ defmodule GameServer do
         |> Enum.join
     end
     
-
     end
