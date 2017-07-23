@@ -4,71 +4,71 @@ defmodule GameServerTest do
     @number "3038675309"
 
     setup do
-        {:ok, pid} = GameServer.start_link("test", Makeitcrash.MessageClient.Logging, @number)
-        {:ok, pid: pid}
+        {:ok, _} = GameServer.start_link("test", Makeitcrash.MessageClient.Logging, @number)
+        {:ok, %{}}
     end
 
-    test "check correct guesses", %{pid: pid} do
-        GameServer.guess_letter(pid, "t")
-        assert {"t_ _ t", ["t"], 0, 5, :playing}  = GameServer.get_game_state(pid)  
-        GameServer.guess_letter(pid, "e") 
-        assert {"te_ t", ["e", "t"], 0, 5, :playing} = GameServer.get_game_state(pid)      
-        GameServer.guess_letter(pid, "s") 
-        assert {"test", ["s", "e", "t"], 0, 5, :win} = GameServer.get_game_state(pid)       
+    test "check correct guesses" do
+        GameServer.guess_letter(@number, "t")
+        assert {"t_ _ t", ["t"], 0, 5, :playing}  = GameServer.get_game_state(@number)
+        GameServer.guess_letter(@number, "e")
+        assert {"te_ t", ["e", "t"], 0, 5, :playing} = GameServer.get_game_state(@number)
+        GameServer.guess_letter(@number, "s")
+        assert {"test", ["s", "e", "t"], 0, 5, :win} = GameServer.get_game_state(@number)
     end
 
-    test "check incorrect guesses", %{pid: pid} do
-        GameServer.guess_letter(pid, "f")
-        assert {"_ _ _ _ ", ["f"], 1, 5, :playing} = GameServer.get_game_state(pid) 
+    test "check incorrect guesses" do
+        GameServer.guess_letter(@number, "f")
+        assert {"_ _ _ _ ", ["f"], 1, 5, :playing} = GameServer.get_game_state(@number)
     end
 
-    test "non single-letter guesses don't get added to guess or total", %{pid: pid} do
-        GameServer.guess_letter(pid, "ffff")
-        assert {"_ _ _ _ ", [], 0, 5, :playing} = GameServer.get_game_state(pid) 
+    test "non single-letter guesses don't get added to guess or total" do
+        GameServer.guess_letter(@number, "ffff")
+        assert {"_ _ _ _ ", [], 0, 5, :playing} = GameServer.get_game_state(@number)
     end
 
-    test "get game state after guess", %{pid: pid} do
-        GameServer.guess_letter(pid, "t") 
-        GameServer.guess_letter(pid, "e")
+    test "get game state after guess" do
+        GameServer.guess_letter(@number, "t")
+        GameServer.guess_letter(@number, "e")
 
-        assert {"te_ t", ["e", "t"], 0, 5, :playing} = GameServer.get_game_state(pid) 
+        assert {"te_ t", ["e", "t"], 0, 5, :playing} = GameServer.get_game_state(@number)
     end
 
-    test "each guess only gets counted once", %{pid: pid} do
-        GameServer.guess_letter(pid, "t")
-        GameServer.guess_letter(pid, "t")
-        GameServer.guess_letter(pid, "t")
-        assert {"t_ _ t", ["t"], 0, 5, :playing} = GameServer.get_game_state(pid)
+    test "each guess only gets counted once" do
+        GameServer.guess_letter(@number, "t")
+        GameServer.guess_letter(@number, "t")
+        GameServer.guess_letter(@number, "t")
+        assert {"t_ _ t", ["t"], 0, 5, :playing} = GameServer.get_game_state(@number)
     end
 
-    test "game over, losing state after too many wrong guesses", %{pid: pid} do
-        GameServer.guess_letter(pid, "r")
-        GameServer.guess_letter(pid, "g")
-        GameServer.guess_letter(pid, "h")
-        GameServer.guess_letter(pid, "c")
-        GameServer.guess_letter(pid, "o")
-        assert {"_ _ _ _ ", ["o", "c", "h", "g", "r"], 5, 5, :lose} = GameServer.get_game_state(pid) 
+    test "game over, losing state after too many wrong guesses" do
+        GameServer.guess_letter(@number, "r")
+        GameServer.guess_letter(@number, "g")
+        GameServer.guess_letter(@number, "h")
+        GameServer.guess_letter(@number, "c")
+        GameServer.guess_letter(@number, "o")
+        assert {"_ _ _ _ ", ["o", "c", "h", "g", "r"], 5, 5, :lose} = GameServer.get_game_state(@number) 
     end
 
-    test "can't keep playing after game over", %{pid: pid} do
-        GameServer.guess_letter(pid, "r")
-        GameServer.guess_letter(pid, "g")
-        GameServer.guess_letter(pid, "h")
-        GameServer.guess_letter(pid, "c")
-        GameServer.guess_letter(pid, "o")
-        assert {"_ _ _ _ ", ["o", "c", "h", "g", "r"], 5, 5, :lose} = GameServer.get_game_state(pid)
-        GameServer.guess_letter(pid, "y")
-        assert {"_ _ _ _ ", ["o", "c", "h", "g", "r"], 5, 5, :lose} = GameServer.get_game_state(pid)
+    test "can't keep playing after game over" do
+        GameServer.guess_letter(@number, "r")
+        GameServer.guess_letter(@number, "g")
+        GameServer.guess_letter(@number, "h")
+        GameServer.guess_letter(@number, "c")
+        GameServer.guess_letter(@number, "o")
+        assert {"_ _ _ _ ", ["o", "c", "h", "g", "r"], 5, 5, :lose} = GameServer.get_game_state(@number)
+        GameServer.guess_letter(@number, "y")
+        assert {"_ _ _ _ ", ["o", "c", "h", "g", "r"], 5, 5, :lose} = GameServer.get_game_state(@number)
     end
 
-    test "game over, winning state if all letters guess correctly", %{pid: pid} do
-        GameServer.guess_letter(pid, "t")
-        GameServer.guess_letter(pid, "e")
-        GameServer.guess_letter(pid, "p")
-        GameServer.guess_letter(pid, "s")
-        assert {"test", ["s", "p", "e", "t"], 1, 5, :win} = GameServer.get_game_state(pid)
-        GameServer.guess_letter(pid, "u")
-        assert {"test", ["s", "p", "e", "t"], 1, 5, :win} =  GameServer.get_game_state(pid)
+    test "game over, winning state if all letters guess correctly" do
+        GameServer.guess_letter(@number, "t")
+        GameServer.guess_letter(@number, "e")
+        GameServer.guess_letter(@number, "p")
+        GameServer.guess_letter(@number, "s")
+        assert {"test", ["s", "p", "e", "t"], 1, 5, :win} = GameServer.get_game_state(@number)
+        GameServer.guess_letter(@number, "u")
+        assert {"test", ["s", "p", "e", "t"], 1, 5, :win} =  GameServer.get_game_state(@number)
     end
 
 end

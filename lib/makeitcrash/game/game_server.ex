@@ -5,23 +5,38 @@ defmodule GameServer do
 
     # Client API
     def start_link(word, client, number) do
+        name = via_tuple(number)
         GenServer.start_link(__MODULE__, %{ word: word, 
                                             guessed: [], 
                                             message_client: client, 
-                                            number: number})
+                                            number: number},
+                                            name: name)
     end
 
-    def get_game_state(pid) do 
-        GenServer.call(pid, :get_state)
+    defp via_tuple(number) do
+        {:via, Registry, {:game_process_registry, number}}
     end
 
-    def guess_letter(pid, guess) do
-        GenServer.cast(pid, {:guess, String.downcase(guess)})
+    def get_game_state(number) do
+        GenServer.call(via_tuple(number), :get_state)
+    end
+
+    def guess_letter(number, guess) do
+        GenServer.cast(via_tuple(number), {:guess, String.downcase(guess)})
     end
 
     # Server
     def init(core_state) do
+        pid = inspect self()
+        message = "Hello from #{pid}!"
+        send self(), {:info_message, message}
         {:ok, game_state_from_core(core_state)}
+    end
+
+    def handle_info({:info_message, message}, state) do
+        pid = inspect self()
+        state.message_client.send_message(message, state.number)
+        {:noreply, state}
     end
 
     def handle_call(:get_state, _from, state) do
