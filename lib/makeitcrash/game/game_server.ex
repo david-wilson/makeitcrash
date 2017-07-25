@@ -33,6 +33,10 @@ defmodule GameServer do
         Process.exit(pid, :kill)
     end
 
+    def new_game(number, word) do
+        GenServer.cast(via_tuple(number), {:new_game, word})
+    end
+
     # Server
     def init(core_state) do
         state =
@@ -63,10 +67,29 @@ defmodule GameServer do
         {user_state, state} = get_reply(state, guess)
         Makeitcrash.StateServer.update_state(state.number, {state.word, state.guessed})
         user_state
-        |> render_game
+        |> render_game(state.word)
         |> state.message_client.send_message(state.number)
         {:noreply, state}
     end  
+
+    def handle_cast({:new_game, word}, state) do
+        new_state = %{ word: word,
+                       guessed: [],
+                       message_client: state.message_client,
+                       number: state.number}
+                       |> game_state_from_core
+
+        Makeitcrash.StateServer.update_state(new_state.number,
+             {new_state.word, new_state.guessed})
+
+        "Starting new game"
+        |> new_state.message_client.send_message(new_state.number)
+
+        user_state(new_state, :playing) 
+        |> render_game(word)
+        |> new_state.message_client.send_message(new_state.number)
+        {:noreply, new_state}
+    end
 
     defp get_reply(state, guess) do
         status = compute_winning_state(state) 
@@ -86,9 +109,16 @@ defmodule GameServer do
         end
     end
 
-    defp render_game({progress, guessed_list, guessed, total, state} = game_tuple) do
-        rendered_list = inspect(guessed_list)
-        "#{progress}, #{guessed}/#{total} guesses, #{rendered_list}"
+    defp render_game({progress, guessed_list, guessed, total, state} = game_tuple, word) do
+        case state do
+            :playing ->
+                rendered_list = inspect(guessed_list)
+                "#{progress}, #{guessed}/#{total} guesses, #{rendered_list}"
+            :win ->
+                "You won! Word is \"#{word}\". Reply \"new\" for new game."
+            :lose ->
+                "Game over! Word was \"#{word}\". Reply \"new\" for new game."
+        end
     end
 
     defp update_state(state, guess) do
