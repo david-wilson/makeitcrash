@@ -15,4 +15,5 @@ defmodule Makeitcrash.GameSupervisor do
         ]
         supervise(children, strategy: :simple_one_for_one)
     end
+
 end 

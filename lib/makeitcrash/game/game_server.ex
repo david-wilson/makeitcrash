@@ -1,6 +1,8 @@
 defmodule GameServer do
     use GenServer
 
+    require Logger
+
     @num_guesses 5
 
     # Client API
@@ -25,12 +27,26 @@ defmodule GameServer do
         GenServer.cast(via_tuple(number), {:guess, String.downcase(guess)})
     end
 
+    def crash(number) do
+        Logger.info "Crashing #{Kernel.inspect self()}"
+        [{pid, _}] = Registry.lookup(:game_process_registry, number)
+        Process.exit(pid, :kill)
+    end
+
     # Server
     def init(core_state) do
+        state =
+            case Makeitcrash.StateServer.get_state(core_state.number) do
+                {_, guessed} ->
+                    %{core_state | guessed: guessed}
+                _ ->
+                    core_state
+            end
+        IO.inspect state
         pid = inspect self()
         message = "Hello from #{pid}!"
         send self(), {:info_message, message}
-        {:ok, game_state_from_core(core_state)}
+        {:ok, game_state_from_core(state)}
     end
 
     def handle_info({:info_message, message}, state) do

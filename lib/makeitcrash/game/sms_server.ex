@@ -20,11 +20,14 @@ defmodule Makeitcrash.SmsServer do
     end
 
     def handle_cast({:message, from, body}, state) do
-        case MapSet.member?(state, from) do
-            true ->
+        case {String.downcase(body), MapSet.member?(state, from)} do
+            {"crash", true} ->
+                GameServer.crash(from)
+                {:noreply, state}
+            {_, true} ->
                 GameServer.guess_letter(from, body)
                 {:noreply, state}
-            false ->
+            {_, false} ->
                 IO.puts "New game!"
                 Makeitcrash.GameSupervisor.start_game(from, "union")
                 GameServer.guess_letter(from, body)
