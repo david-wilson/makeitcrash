@@ -3,7 +3,7 @@ defmodule GameServer do
 
     require Logger
 
-    @num_guesses 5
+    @num_guesses 7
 
     # Client API
     def start_link(word, client, number) do
@@ -41,8 +41,8 @@ defmodule GameServer do
     def init(core_state) do
         state =
             case Makeitcrash.StateServer.get_state(core_state.number) do
-                {_, guessed} ->
-                    %{core_state | guessed: guessed}
+                {word, guessed} ->
+                    %{core_state | guessed: guessed, word: word}
                 _ ->
                     core_state
             end
@@ -50,7 +50,9 @@ defmodule GameServer do
         pid = inspect self()
         message = "Hello from #{pid}!"
         send self(), {:info_message, message}
-        {:ok, game_state_from_core(state)}
+        game_state = game_state_from_core(state)
+        send_state_message(game_state)
+        {:ok, game_state}
     end
 
     def handle_info({:info_message, message}, state) do
@@ -85,9 +87,7 @@ defmodule GameServer do
         "Starting new game"
         |> new_state.message_client.send_message(new_state.number)
 
-        user_state(new_state, :playing) 
-        |> render_game(word)
-        |> new_state.message_client.send_message(new_state.number)
+        send_state_message(new_state)
         {:noreply, new_state}
     end
 
@@ -170,6 +170,12 @@ defmodule GameServer do
 
     defp user_state(state, status) do 
         {render_filled_word(state.word, state.guessed_set), state.guessed, state.num_wrong, @num_guesses, status}
+    end
+
+    defp send_state_message(state) do
+        user_state(state, :playing)
+        |> render_game(state.word)
+        |> state.message_client.send_message(state.number)
     end
 
     defp render_filled_word(word, guessed_set) do

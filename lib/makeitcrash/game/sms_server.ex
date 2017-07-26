@@ -1,6 +1,11 @@
 defmodule Makeitcrash.SmsServer do
     use GenServer
 
+    @words File.read!("lib/makeitcrash/word.txt")
+        |> String.split("\n")
+        |> Enum.map(&String.downcase/1)
+        |> Enum.map(&String.trim/1)
+
     #Client API
     def start_link do
         GenServer.start_link(__MODULE__, MapSet.new, name: MessageServer)
@@ -22,6 +27,7 @@ defmodule Makeitcrash.SmsServer do
     def handle_cast({:message, from, body}, state) do
         case {String.downcase(body), MapSet.member?(state, from)} do
             {"new", true} ->
+                IO.puts "New game!"
                 GameServer.new_game(from, get_word())
                 {:noreply, state}
             {"crash", true} ->
@@ -31,14 +37,12 @@ defmodule Makeitcrash.SmsServer do
                 GameServer.guess_letter(from, body)
                 {:noreply, state}
             {_, false} ->
-                IO.puts "New game!"
                 Makeitcrash.GameSupervisor.start_game(from, get_word())
-                GameServer.guess_letter(from, body)
                 {:noreply, MapSet.put(state, from)}
         end
     end
 
     defp get_word do
-        "union"
+       @words |> Enum.random
     end
 end
