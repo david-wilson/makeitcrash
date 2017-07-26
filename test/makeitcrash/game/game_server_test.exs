@@ -1,9 +1,10 @@
 defmodule GameServerTest do
-    use ExUnit.Case, async: true
+    use ExUnit.Case, async: false
 
     @number "3038675309"
 
     setup do
+        Makeitcrash.StateServer.clear_state(@number)
         {:ok, _} = GameServer.start_link("test", Makeitcrash.MessageClient.Logging, @number)
         {:ok, %{}}
     end

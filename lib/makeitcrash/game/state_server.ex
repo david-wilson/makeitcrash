@@ -13,6 +13,10 @@ defmodule Makeitcrash.StateServer do
         GenServer.call(StateServer, {:get, number})
     end
 
+    def clear_state(number) do
+        GenServer.cast(StateServer, {:update, number, {}})
+    end
+
     def get_players do
         GenServer.call(StateServer, :get_players)
     end
