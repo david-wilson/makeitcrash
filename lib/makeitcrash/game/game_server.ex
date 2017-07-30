@@ -46,7 +46,7 @@ defmodule GameServer do
                 _ ->
                     core_state
             end
-        Makeitcrash.StateServer.update_state(state.number, {state.word, state.guessed})
+        Makeitcrash.StateServer.update_state(core_state.number, {state.word, state.guessed})
         send self(), {:lazy_init}
         game_state = game_state_from_core(state)
         {:ok, game_state}
