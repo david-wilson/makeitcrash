@@ -46,18 +46,17 @@ defmodule GameServer do
                 _ ->
                     core_state
             end
-        IO.inspect state
-        pid = inspect self()
-        message = "Hello from #{pid}!"
-        send self(), {:info_message, message}
+        Makeitcrash.StateServer.update_state(state.number, {state.word, state.guessed})
+        send self(), {:lazy_init}
         game_state = game_state_from_core(state)
-        send_state_message(game_state)
         {:ok, game_state}
     end
 
-    def handle_info({:info_message, message}, state) do
+    def handle_info({:lazy_init}, state) do
         pid = inspect self()
+        message = "Hello from #{pid}!"
         state.message_client.send_message(message, state.number)
+        send_state_message(state)
         {:noreply, state}
     end
 

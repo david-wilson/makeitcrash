@@ -15,7 +15,6 @@ defmodule Makeitcrash.Application do
       supervisor(Makeitcrash.GameSupervisor, []),
       # Start your own worker by calling: Makeitcrash.Worker.start_link(arg1, arg2, arg3)
       # worker(Makeitcrash.Worker, [arg1, arg2, arg3]),
-      worker(Makeitcrash.SmsServer, [])
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
