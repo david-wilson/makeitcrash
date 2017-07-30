@@ -54,7 +54,7 @@ defmodule GameServer do
 
     def handle_info({:lazy_init}, state) do
         pid = inspect self()
-        message = "Hello from #{pid}!"
+        message = "Hello from #{pid}! Send a letter to make a guess."
         state.message_client.send_message(message, state.number)
         send_state_message(state)
         {:noreply, state}
