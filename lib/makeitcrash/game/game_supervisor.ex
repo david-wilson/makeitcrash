@@ -1,8 +1,17 @@
 defmodule Makeitcrash.GameSupervisor do
     use Supervisor
 
+    alias Makeitcrash.StateServer
+
     def start_link do
-        Supervisor.start_link(__MODULE__, [], name: :game_supervisor)
+        start = Supervisor.start_link(__MODULE__, [], name: :game_supervisor)
+
+        # Pull children from state, if present
+        StateServer.get_players
+        |> Enum.map(fn (number) -> {StateServer.get_state(number), number} end )
+        |> Enum.map(fn ({{word, guessed}, number}) -> start_game(number, word) end) 
+
+        start
     end
 
     def start_game(number, word) do
