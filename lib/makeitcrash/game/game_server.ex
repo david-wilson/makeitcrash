@@ -6,12 +6,13 @@ defmodule GameServer do
     @num_guesses 7
 
     # Client API
-    def start_link(word, client, number) do
+    def start_link(word, client, number, to) do
         name = via_tuple(number)
         GenServer.start_link(__MODULE__, %{ word: word, 
                                             guessed: [], 
                                             message_client: client, 
-                                            number: number},
+                                            number: number,
+                                            to: to},
                                             name: name)
     end
 
@@ -41,12 +42,13 @@ defmodule GameServer do
     def init(core_state) do
         state =
             case Makeitcrash.StateServer.get_state(core_state.number) do
-                {word, guessed} ->
-                    %{core_state | guessed: guessed, word: word}
+                {to, word, guessed} ->
+                    %{core_state | guessed: guessed, word: word, to: to}
                 _ ->
                     core_state
             end
-        Makeitcrash.StateServer.update_state(core_state.number, {state.word, state.guessed})
+        IO.puts "GOT STATE"
+        Makeitcrash.StateServer.update_state(core_state.number, {state.to, state.word, state.guessed})
         send self(), {:lazy_init}
         game_state = game_state_from_core(state)
         {:ok, game_state}
@@ -55,7 +57,8 @@ defmodule GameServer do
     def handle_info({:lazy_init}, state) do
         pid = inspect self()
         message = "Hello from #{pid}! Send a letter to make a guess."
-        state.message_client.send_message(message, state.number)
+        IO.puts message
+        state.message_client.send_message(message, state.number, state.to)
         send_state_message(state)
         {:noreply, state}
     end
@@ -66,10 +69,10 @@ defmodule GameServer do
 
     def handle_cast({:guess, guess}, state) do
         {user_state, state} = get_reply(state, guess)
-        Makeitcrash.StateServer.update_state(state.number, {state.word, state.guessed})
+        Makeitcrash.StateServer.update_state(state.number, {state.to, state.word, state.guessed})
         user_state
         |> render_game(state.word)
-        |> state.message_client.send_message(state.number)
+        |> state.message_client.send_message(state.number, state.to)
         {:noreply, state}
     end  
 
@@ -77,14 +80,15 @@ defmodule GameServer do
         new_state = %{ word: word,
                        guessed: [],
                        message_client: state.message_client,
-                       number: state.number}
+                       number: state.number,
+                       to: state.to}
                        |> game_state_from_core
 
         Makeitcrash.StateServer.update_state(new_state.number,
-             {new_state.word, new_state.guessed})
+             {new_state.to, new_state.word, new_state.guessed})
 
         "Starting new game"
-        |> new_state.message_client.send_message(new_state.number)
+        |> new_state.message_client.send_message(new_state.number, new_state.to)
 
         send_state_message(new_state)
         {:noreply, new_state}
@@ -172,9 +176,10 @@ defmodule GameServer do
     end
 
     defp send_state_message(state) do
+        IO.puts "Sending message"
         user_state(state, :playing)
         |> render_game(state.word)
-        |> state.message_client.send_message(state.number)
+        |> state.message_client.send_message(state.number, state.to)
     end
 
     defp render_filled_word(word, guessed_set) do

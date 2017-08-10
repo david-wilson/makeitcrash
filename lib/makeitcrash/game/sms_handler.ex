@@ -5,26 +5,31 @@ defmodule Makeitcrash.SmsHandler do
         |> Enum.map(&String.downcase/1)
         |> Enum.map(&String.trim/1)
 
-    def handle_message(from, body) do
+    def handle_message(to, from, body) do
        game_started = case Makeitcrash.StateServer.get_state(from) do
-                {word, guessed} ->
+                {to, word, guessed} ->
                     true
                 state ->
                     IO.puts "State: #{Kernel.inspect state}"
                     false
             end
-        case {String.downcase(body), game_started} do
+
+        cleaned = body
+            |> String.trim
+            |> String.downcase
+
+        case {String.downcase(cleaned), game_started} do
             {"new", true} ->
                 IO.puts "New game!"
                 GameServer.new_game(from, get_word())
             {"crash", true} ->
                 GameServer.crash(from)
             {_, true} ->
-                IO.puts "Guessing #{body}"
-                GameServer.guess_letter(from, body)
+                IO.puts "Guessing #{cleaned}"
+                GameServer.guess_letter(from, cleaned)
             {_, false} ->
                 IO.puts "Starting fresh game"
-                Makeitcrash.GameSupervisor.start_game(from, get_word())
+                Makeitcrash.GameSupervisor.start_game(to, from, get_word())
         end
     end
 
