@@ -9,7 +9,7 @@ defmodule Makeitcrash.GameSupervisor do
         # Pull children from state, if present
         StateServer.get_players
         |> Enum.map(fn (number) -> {StateServer.get_state(number), number} end )
-        |> Enum.map(fn ({{to, word, guessed}, number}) -> start_game(to, number, word) end) 
+        |> Enum.each(fn ({{to, word, guessed}, number}) -> start_game(to, number, word) end)
 
         start
     end
