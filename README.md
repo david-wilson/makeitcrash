@@ -1,22 +1,16 @@
 # Makeitcrash
+"Make it crash" code from my talk at [Develop Denver 2017](https://developdenver.org/). Implements a simple number guessing game over SMS to demonstrate Elixir supervisor behavior. Slides are included in the PDF in the repository root.
+
+## Running
+You will need Twilio API keys to run this project. Set them up in your enviroment as outlined in the "Configuration" section of the ExTwilio project [README](https://github.com/danielberkompas/ex_twilio).
+
+You will also need to configure an SMS webhook for your Twilio SMS number/numbers at:
+`POST {internet addressable hostname}/api/webhook`
 
 To start your Phoenix server:
 
   * Install dependencies with `mix deps.get`
   * Start Phoenix endpoint with `mix phx.server`
 
-Now you can visit [`localhost:4000`](http://localhost:4000) from your browser.
 
-Ready to run in production? Please [check our deployment guides](http://www.phoenixframework.org/docs/deployment).
 
-## Learn more
-
-  * Official website: http://www.phoenixframework.org/
-  * Guides: http://phoenixframework.org/docs/overview
-  * Docs: https://hexdocs.pm/phoenix
-  * Mailing list: http://groups.google.com/group/phoenix-talk
-  * Source: https://github.com/phoenixframework/phoenix
-
-## Credits
-
-Word list sourced from https://www.hangmanwords.com/words
